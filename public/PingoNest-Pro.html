@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PingoNest Pro — ساختارسازی هوشمند و استودیو فرآیند BPMN 2.0</title>
+  <meta name="description" content="نرم‌افزار جامع چارت سازمانی، ساختار ماتریسی پروژه‌ها، فرآیندهای BPMN 2.0 و تحلیل هوشمند گلوگاه‌ها (نسخه تک‌فایل مستقل).">
+  <!-- Tailwind CSS & Vazirmatn Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Vazirmatn', 'Tahoma', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Vazirmatn', Tahoma, sans-serif; }
+    .node-card { width: 320px; min-height: 165px; }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.7); }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen w-screen overflow-hidden flex flex-col select-none">
+
+  <!-- Real Live App Notice Banner -->
+  <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white text-xs px-4 py-2 border-b border-indigo-500/30 flex items-center justify-between flex-wrap gap-2 z-40 flex-shrink-0">
+    <div class="flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-black text-amber-300">راهنمای مشاهده سیستم:</span>
+      <span class="text-slate-200">این صفحه فایل استاتیک آفلاین در حافظه موقت سیستم شماست. وب‌اپلیکیشن اصلی و زنده در پنجره AI Studio فعال است.</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="App.saveProjectFile()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-black text-xs shadow flex items-center gap-1.5 transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+        <span>ذخیره فایل پروژه روی کامپیوتر (.pingo)</span>
+      </button>
+      <button onclick="Modals.open('rbac')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-black text-xs shadow flex items-center gap-1.5 transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <span>سطوح کاربری (RBAC)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== TOP NAVIGATION ==================== -->
+  <header class="h-16 px-4 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between z-30 flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-black text-base tracking-tight text-slate-900 dark:text-slate-100">
+            PingoNest <span class="text-indigo-600 dark:text-indigo-400">Pro</span>
+          </h1>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+            نسخه تک‌فایل آفلاین
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-600 dark:text-slate-400 font-semibold" id="top-org-name">پارس تک — شرکت راهکارهای ابری و مالی</p>
+      </div>
+    </div>
+
+    <!-- Action Modules -->
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <button onclick="App.saveProjectFile()" class="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+        <span>ذخیره روی کامپیوتر</span>
+      </button>
+
+      <button onclick="Modals.open('rbac')" class="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 hover:bg-purple-100 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
+        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <span>سطوح کاربری (RBAC)</span>
+      </button>
+
+      <button onclick="Modals.open('bpmn')" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 hover:bg-indigo-100 text-xs font-bold flex items-center gap-1.5 transition-all">
+        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+        <span>فرآیندها (BPMN 2.0)</span>
+      </button>
+
+      <button onclick="Modals.open('projects')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all">
+        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        <span>پروژه‌ها</span>
+      </button>
+
+      <button onclick="Modals.open('analytics')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span>تحلیل هوشمند</span>
+      </button>
+
+      <button onclick="Modals.open('compare')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all">
+        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        <span>مقایسه چارت‌ها</span>
+      </button>
+
+      <button onclick="Modals.open('export')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all">
+        <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <span>خروجی</span>
+      </button>
+
+      <button onclick="App.triggerExcelImport()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all">
+        <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
+        <span>ورود اکسل</span>
+      </button>
+
+      <div class="w-px h-5 bg-slate-200 dark:bg-slate-800 mx-1"></div>
+
+      <!-- Undo / Redo -->
+      <button onclick="App.undo()" id="btn-undo" class="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg disabled:opacity-30" title="واگردانی (Ctrl+Z)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+      </button>
+      <button onclick="App.redo()" id="btn-redo" class="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg disabled:opacity-30" title="بازانجام (Ctrl+Y)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"/></svg>
+      </button>
+
+      <!-- Theme Switcher -->
+      <button onclick="App.toggleTheme()" class="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" title="تغییر تم">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      </button>
+
+      <!-- Add Person -->
+      <button onclick="Drawer.openNew()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all mr-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>افزودن شخص</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN WORKSPACE ==================== -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-72 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto p-4 space-y-5 flex-shrink-0 z-20">
+      <div class="space-y-4">
+        <!-- Search -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">جستجو در چارت</label>
+          <input type="text" id="search-input" oninput="App.onSearch(this.value)" placeholder="نام، سمت یا دپارتمان..." class="w-full text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none font-medium">
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-2 text-center">
+          <div>
+            <span class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">کل پرسنل</span>
+            <div id="stat-total" class="font-black text-lg text-slate-900 dark:text-slate-100">0</div>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">دپارتمان‌ها</span>
+            <div id="stat-depts" class="font-black text-lg text-indigo-600">0</div>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">سطوح چارت</span>
+            <div id="stat-levels" class="font-black text-lg text-purple-600">0</div>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-600 dark:text-slate-400 font-bold">نفرات فعال</span>
+            <div id="stat-active" class="font-black text-lg text-emerald-600">0</div>
+          </div>
+        </div>
+
+        <!-- Color Mode -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">طیف رنگ‌بندی</label>
+          <div class="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold">
+            <button onclick="App.setColorBy('department')" id="btn-color-dept" class="py-1 rounded-lg bg-white dark:bg-slate-900 text-indigo-600 shadow-sm">دپارتمان</button>
+            <button onclick="App.setColorBy('level')" id="btn-color-level" class="py-1 rounded-lg text-slate-600 dark:text-slate-400">سطح چارت</button>
+          </div>
+        </div>
+
+        <!-- Highlight Project -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">برجسته‌سازی اعضای پروژه</label>
+          <select id="project-highlight-select" onchange="App.setProjectHighlight(this.value)" class="w-full text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none">
+            <option value="">— هیچ‌کدام (عادی) —</option>
+          </select>
+        </div>
+
+        <!-- Department Filter Chips -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">فیلتر دپارتمان‌ها</label>
+          <div id="dept-chips" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto"></div>
+        </div>
+
+        <!-- Display Toggles -->
+        <div class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800 text-xs">
+          <label class="flex items-center justify-between font-semibold cursor-pointer">
+            <span>عکس پرسنلی</span>
+            <input type="checkbox" id="chk-photo" checked onchange="App.toggleView('showPhoto', this.checked)" class="accent-indigo-600">
+          </label>
+          <label class="flex items-center justify-between font-semibold cursor-pointer">
+            <span>شمارش زیرمجموعه‌ها</span>
+            <input type="checkbox" id="chk-subcount" checked onchange="App.toggleView('showSubCount', this.checked)" class="accent-indigo-600">
+          </label>
+          <label class="flex items-center justify-between font-semibold cursor-pointer">
+            <span>کد پرسنلی (#ID)</span>
+            <input type="checkbox" id="chk-id" onchange="App.toggleView('showId', this.checked)" class="accent-indigo-600">
+          </label>
+          <div class="pt-1">
+            <div class="flex justify-between text-[11px] text-slate-600 mb-1">
+              <span>فاصله سطوح</span>
+              <span id="spacing-val">110px</span>
+            </div>
+            <input type="range" min="80" max="180" value="110" oninput="App.setLevelSpacing(+this.value)" class="w-full accent-indigo-600">
+          </div>
+        </div>
+      </div>
+
+      <button onclick="App.resetFilters()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
+        بازنشانی فیلترها
+      </button>
+    </aside>
+
+    <!-- Canvas Workspace -->
+    <main class="flex-1 relative overflow-hidden bg-slate-100 dark:bg-slate-950" id="canvas-container">
+      <!-- Pan & Zoom Control Floating Bar -->
+      <div class="absolute top-4 left-4 z-20 flex items-center gap-1.5 p-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
+        <button onclick="Canvas.zoomIn()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-sm font-bold">+</button>
+        <span id="zoom-label" class="px-2 text-xs font-bold text-slate-600 min-w-12 text-center">100%</span>
+        <button onclick="Canvas.zoomOut()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-sm font-bold">−</button>
+        <div class="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+        <button onclick="Canvas.fitView()" class="px-2.5 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg">نمای کامل</button>
+      </div>
+
+      <!-- Scalable World -->
+      <div id="canvas-world" class="absolute top-0 left-0 origin-top-left transition-transform duration-75">
+        <!-- SVG Connections Layer -->
+        <svg id="canvas-svg" class="absolute inset-0 overflow-visible pointer-events-none" style="width:5000px; height:5000px">
+          <defs>
+            <marker id="matrix-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8B5CF6"/>
+            </marker>
+          </defs>
+          <g id="svg-links"></g>
+        </svg>
+
+        <!-- HTML Cards Layer -->
+        <div id="cards-layer" class="relative"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Hidden Excel Input -->
+  <input type="file" id="excel-file-input" accept=".xlsx,.xls" onchange="App.handleExcelFile(this.files[0])" class="hidden">
+
+  <!-- ==================== BPMN 2.0 MODAL ==================== -->
+  <div id="modal-bpmn" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+    <div class="w-full max-w-7xl h-[92vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+      <header class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-600 flex items-center justify-center font-black">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+          </div>
+          <div>
+            <h3 class="font-black text-lg text-slate-900 dark:text-slate-100">استودیو فرآیندها (BPMN 2.0) و ماتریس RACI</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">نگاشت گردش کارهای کاری روی چارت سازمانی با اعتبارسنجی تفکیک وظایف (SoD)</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="BpmnStudio.exportXml()" class="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow">خروجی BPMN 2.0 XML</button>
+          <button onclick="Modals.close('bpmn')" class="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">✕</button>
+        </div>
+      </header>
+
+      <!-- BPMN Toolbar -->
+      <div class="px-6 py-2 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button onclick="BpmnStudio.addNode('start')" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100">+ شروع</button>
+          <button onclick="BpmnStudio.addNode('task')" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100">+ فعالیت (User Task)</button>
+          <button onclick="BpmnStudio.addNode('gateway')" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100">+ دروازه تصمیم (XOR)</button>
+          <button onclick="BpmnStudio.addNode('end')" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100">+ پایان</button>
+          <button onclick="BpmnStudio.addLane()" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100">+ لِین دپارتمان</button>
+          <button onclick="BpmnStudio.toggleConnect()" id="btn-bpmn-connect" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">🔗 اتصال گام‌ها</button>
+          <button onclick="BpmnStudio.deleteSelected()" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100">حذف انتخاب‌شده</button>
+        </div>
+      </div>
+
+      <!-- BPMN Canvas + Split Properties -->
+      <div class="flex-1 flex overflow-hidden">
+        <div id="bpmn-canvas-wrap" class="flex-1 overflow-auto bg-slate-100 dark:bg-slate-950 relative">
+          <div id="bpmn-canvas" class="relative" style="min-width: 1400px; min-height: 800px;">
+            <div id="bpmn-lanes"></div>
+            <svg id="bpmn-svg" class="absolute inset-0 pointer-events-none" style="width:2000px; height:2000px;">
+              <defs>
+                <marker id="bpmn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366F1"/>
+                </marker>
+              </defs>
+              <g id="bpmn-edges-group"></g>
+            </svg>
+            <div id="bpmn-nodes-layer"></div>
+          </div>
+        </div>
+
+        <!-- BPMN Side Inspector -->
+        <div class="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 overflow-y-auto" id="bpmn-inspector">
+          <h4 class="font-bold text-xs text-slate-600 mb-3 uppercase">ویژگی‌های گام و ماتریس RACI</h4>
+          <div id="bpmn-inspector-content" class="text-xs text-slate-500 text-center py-8">
+            برای تخصیص مجری از چارت یا تنظیم شرط، روی یک فعالیت یا اتصال کلیک کنید.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PROJECTS MODAL ==================== -->
+  <div id="modal-projects" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+    <div class="w-full max-w-4xl h-[85vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+      <header class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-600/10 text-purple-600 flex items-center justify-center font-black">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-black text-lg text-slate-900 dark:text-slate-100">مدیریت ساختار ماتریسی پروژه‌ها</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">تخصیص پرسنل بین‌دپارتمانی، درصد درگیری زمانی و پایش بار کاری</p>
+          </div>
+        </div>
+        <button onclick="Modals.close('projects')" class="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">✕</button>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-4" id="projects-list-container"></div>
+    </div>
+  </div>
+
+  <!-- ==================== ANALYTICS MODAL ==================== -->
+  <div id="modal-analytics" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+    <div class="w-full max-w-5xl h-[88vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+      <header class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center font-black">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-black text-lg text-slate-900 dark:text-slate-100">هوش سازمانی و شبیه‌سازی سناریوها</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">حوزه کنترل مدیران، شناسایی گلوگاه‌های کلیدی و سناریوسازی فرضی</p>
+          </div>
+        </div>
+        <button onclick="Modals.close('analytics')" class="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">✕</button>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-6" id="analytics-content"></div>
+    </div>
+  </div>
+
+  <!-- ==================== COMPARE MODAL ==================== -->
+  <div id="modal-compare" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+    <div class="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 class="font-black text-base text-slate-900 dark:text-slate-100">مقایسه دو نسخه از چارت (Diff Tool)</h3>
+        <button onclick="Modals.close('compare')" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-xl">✕</button>
+      </div>
+      <div class="p-6 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-center cursor-pointer hover:border-indigo-500 bg-slate-50 dark:bg-slate-950/40">
+        <input type="file" id="diff-file-input" accept=".xlsx,.xls" onchange="App.handleDiffFile(this.files[0])" class="hidden">
+        <label for="diff-file-input" class="cursor-pointer block">
+          <div class="font-bold text-sm text-indigo-600 mb-1">بارگذاری فایل اکسل نسخه دیگر برای مقایسه</div>
+          <span class="text-xs text-slate-500">تغییرات سمت، افراد جدید، حذف‌شده‌ها و انتقال‌ها استخراج می‌شود</span>
+        </label>
+      </div>
+      <div id="diff-results" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- ==================== RBAC MANAGEMENT MODAL ==================== -->
+  <div id="modal-rbac" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+    <div class="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+      <header class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-600/10 text-purple-600 flex items-center justify-center font-black">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-black text-lg text-slate-900 dark:text-slate-100">مدیریت سطوح دسترسی و کاربران (RBAC Center)</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">تخصیص نقش‌های شش‌گانه سازمانی، شبیه‌سازی نشست جاری و ماتریس اختیارات</p>
+          </div>
+        </div>
+        <button onclick="Modals.close('rbac')" class="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">✕</button>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
+        <!-- 6 Roles Grid -->
+        <div class="space-y-3">
+          <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">نقش‌های سازمانی فعال و تغییر نشست جاری:</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="p-4 rounded-2xl border-2 border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-black text-sm text-indigo-700 dark:text-indigo-300">مدیر کل سامانه (Super Admin)</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white">نشست فعال</span>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">دسترسی تام و نامحدود به ساختار چارت، پرسنل، حقوق، فرآیندها و پشتیبان‌گیری.</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-black text-sm text-purple-700 dark:text-purple-300">معمار سازمان (Signavio Lead)</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">طراح چارت و فرآیند</span>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">طراحی کلان چارت، روابط بین‌واحدی و مدلسازی فرآیندهای BPMN 2.0 (عدم دسترسی به حقوق).</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-black text-sm text-emerald-700 dark:text-emerald-300">مدیر منابع انسانی (HR)</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">امور پرسنلی</span>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">مدیریت پرسنل، تصاویر، احکام، حقوق و دستمزد و استخدام.</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-black text-sm text-amber-700 dark:text-amber-300">سرپرست دپارتمان (Dept Lead)</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">مدیر میانی</span>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">مدیریت اعضای دپارتمان تخصصی خود و انتساب پروژه‌های ماتریسی.</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-black text-sm text-sky-700 dark:text-sky-300">ممیز فرآیند و انطباق (Auditor)</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">RCM و انطباق</span>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">ممیزی فرآیندها، تحلیل ماتریس ریسک و کنترل RCM و سلامت داده‌ها.</p>
+              </div>
+            </div>
+            <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-black text-sm text-slate-700 dark:text-slate-300">مشاهده‌گر چارت (Employee)</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">فقط خواندنی</span>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">دسترسی فقط‌خواندنی به چارت سازمانی و اطلاعات عمومی همکاران.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Matrix Table -->
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
+          <h4 class="font-bold text-slate-900 dark:text-slate-100 text-xs">ماتریس اختیارات و دسترسی‌های سیستمی:</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 font-bold text-slate-500">
+                  <th class="p-2">مجوز / عملیات</th>
+                  <th class="p-2 text-center text-red-600">Super Admin</th>
+                  <th class="p-2 text-center text-purple-600">Architect</th>
+                  <th class="p-2 text-center text-emerald-600">HR Manager</th>
+                  <th class="p-2 text-center text-amber-600">Dept Lead</th>
+                  <th class="p-2 text-center text-sky-600">Auditor</th>
+                  <th class="p-2 text-center text-slate-500">Viewer</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-700/60 font-semibold">
+                <tr><td class="p-2">ویرایش ساختار کلان چارت</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td></tr>
+                <tr><td class="p-2">مشاهده و ویرایش حقوق و دستمزد</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td></tr>
+                <tr><td class="p-2">مدل‌سازی و انتشار فرآیندهای BPMN</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td></tr>
+                <tr><td class="p-2">ممیزی فرآیند و ماتریس ریسک (RCM)</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-rose-500">✕</td></tr>
+                <tr><td class="p-2">مدیریت سطوح دسترسی (RBAC)</td><td class="p-2 text-center text-emerald-600">✓</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td><td class="p-2 text-center text-rose-500">✕</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EXPORT MODAL ==================== -->
+  <div id="modal-export" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 class="font-black text-base text-slate-900 dark:text-slate-100">خروجی و اشتراک‌گذاری چارت</h3>
+        <button onclick="Modals.close('export')" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-xl">✕</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="App.exportStandaloneHtml()" class="p-4 rounded-2xl border hover:border-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-center flex flex-col items-center gap-2">
+          <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 flex items-center justify-center font-bold">HTML</div>
+          <span class="font-bold text-xs">فایل تکی HTML</span>
+          <span class="text-[10px] text-slate-500">اجرای کامل آفلاین</span>
+        </button>
+        <button onclick="App.exportExcel()" class="p-4 rounded-2xl border hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 text-center flex flex-col items-center gap-2">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center font-bold">XLSX</div>
+          <span class="font-bold text-xs">خروجی فایل اکسل</span>
+          <span class="text-[10px] text-slate-500">جدول کامل مشخصات</span>
+        </button>
+        <button onclick="window.print()" class="p-4 rounded-2xl border hover:border-purple-600 hover:bg-purple-50/50 text-center flex flex-col items-center gap-2">
+          <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold">PDF</div>
+          <span class="font-bold text-xs">چاپ و PDF</span>
+          <span class="text-[10px] text-slate-500">از طریق ابزار چاپ</span>
+        </button>
+        <button onclick="App.downloadExcelTemplate()" class="p-4 rounded-2xl border hover:border-amber-600 hover:bg-amber-50/50 text-center flex flex-col items-center gap-2">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold">الگو</div>
+          <span class="font-bold text-xs">الگوی اکسل ورودی</span>
+          <span class="text-[10px] text-slate-500">دانلود قالب استاندارد</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PERSON DRAWER ==================== -->
+  <div id="drawer-person" class="fixed inset-0 z-50 hidden justify-end bg-slate-950/50 backdrop-blur-sm">
+    <div class="w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col p-6 space-y-4 overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b">
+        <h3 id="drawer-title" class="font-black text-base text-slate-900 dark:text-slate-100">مشخصات عضو سازمان</h3>
+        <button onclick="Drawer.close()" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-xl">✕</button>
+      </div>
+      <form id="person-form" onsubmit="Drawer.save(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="f-person-id">
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">نام و نام خانوادگی</label>
+          <input type="text" id="f-name" required class="w-full p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 outline-none font-bold">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">سمت / عنوان شغلی</label>
+          <input type="text" id="f-title" required class="w-full p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 outline-none">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">دپارتمان</label>
+          <input type="text" id="f-dept" required class="w-full p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 outline-none">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">مدیر مستقیم در چارت</label>
+          <select id="f-parent" class="w-full p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 outline-none"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">وضعیت</label>
+            <select id="f-status" class="w-full p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 outline-none">
+              <option value="فعال">فعال</option>
+              <option value="غیرفعال">غیرفعال</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">حقوق (ریال)</label>
+            <input type="number" id="f-salary" class="w-full p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">ایمیل سازمانی</label>
+          <input type="email" id="f-email" class="w-full p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 outline-none">
+        </div>
+        <div class="pt-4 flex items-center justify-between border-t">
+          <button type="button" id="btn-delete-person" onclick="Drawer.deleteCurrent()" class="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl font-bold">حذف</button>
+          <div class="flex gap-2">
+            <button type="button" onclick="Drawer.close()" class="px-4 py-2 hover:bg-slate-100 rounded-xl font-bold">انصراف</button>
+            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow">ذخیره</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== APPLICATION SCRIPTS ==================== -->
+  <script>
+    /* Baseline Sample Data */
+    const SAMPLE_PEOPLE = [
+      { id: '1001', name: 'دکتر محمدرضا عسگری', title: 'مدیرعامل و عضو هیئت مدیره', department: 'هیئت مدیره', parentId: '', level: 1, subCount: 16, status: 'فعال', salary: 145000000, projectRoles: [{ project: 'نئوبانک سازمانی', role: 'اسپانسر ارشد', allocation: 20 }] },
+      { id: '1002', name: 'مهندس مریم فراهانی', title: 'معاون فنی و مدیر ارشد فناوری (CTO)', department: 'فنی و مهندسی', parentId: '1001', level: 2, subCount: 7, status: 'فعال', salary: 115000000, projectRoles: [{ project: 'نئوبانک سازمانی', role: 'مدیر فنی', allocation: 60 }] },
+      { id: '1003', name: 'حسین سلیمانی', title: 'معاون مالی و اداری (CFO)', department: 'مالی و اداری', parentId: '1001', level: 2, subCount: 3, status: 'فعال', salary: 95000000 },
+      { id: '1004', name: 'زهرا کاظمی', title: 'معاون بازاریابی و رشد (CMO)', department: 'بازاریابی و فروش', parentId: '1001', level: 2, subCount: 3, status: 'فعال', salary: 92000000 },
+      { id: '1005', name: 'دکتر علی نوری', title: 'معاون منابع انسانی (CHRO)', department: 'منابع انسانی', parentId: '1001', level: 2, subCount: 2, status: 'فعال', salary: 88000000 },
+      { id: '1006', name: 'نیما بهرامی', title: 'مدیر مهندسی نرم‌افزار', department: 'فنی و مهندسی', parentId: '1002', level: 3, subCount: 4, status: 'فعال', salary: 82000000, projectRoles: [{ project: 'نئوبانک سازمانی', role: 'تیم لید بک‌اند', allocation: 70 }] },
+      { id: '1007', name: 'روشنک داودی', title: 'مدیر زیرساخت و امنیت (SecOps)', department: 'فنی و مهندسی', parentId: '1002', level: 3, subCount: 1, status: 'فعال', salary: 80000000 },
+      { id: '1008', name: 'آرش شمس', title: 'توسعه‌دهنده ارشد بک‌اند', department: 'فنی و مهندسی', parentId: '1006', level: 4, subCount: 0, status: 'فعال', salary: 62000000, projectRoles: [{ project: 'نئوبانک سازمانی', role: 'سرویس تراکنش', allocation: 80 }] },
+      { id: '1009', name: 'پگاه صادقی', title: 'توسعه‌دهنده ارشد فرانت‌اند', department: 'فنی و مهندسی', parentId: '1006', level: 4, subCount: 0, status: 'فعال', salary: 60000000 },
+      { id: '1010', name: 'کیوان خسروی', title: 'مهندس تست و تضمین کیفیت (QA)', department: 'فنی و مهندسی', parentId: '1006', level: 4, subCount: 0, status: 'فعال', salary: 54000000 },
+      { id: '1011', name: 'سهراب معتمدی', title: 'مهندس امنیت شبکه', department: 'فنی و مهندسی', parentId: '1007', level: 4, subCount: 0, status: 'فعال', salary: 58000000 },
+      { id: '1012', name: 'سارا تقوی', title: 'مدیر حسابداری و بودجه', department: 'مالی و اداری', parentId: '1003', level: 3, subCount: 1, status: 'فعال', salary: 56000000 },
+      { id: '1013', name: 'رضا کمالی', title: 'کارشناس تدارکات و خرید', department: 'مالی و اداری', parentId: '1012', level: 4, subCount: 0, status: 'فعال', salary: 38000000 },
+      { id: '1014', name: 'فرزاد میرزایی', title: 'مدیر فروش سازمانی', department: 'بازاریابی و فروش', parentId: '1004', level: 3, subCount: 1, status: 'فعال', salary: 65000000 },
+      { id: '1015', name: 'الناز حبیبی', title: 'کارشناس دیجیتال مارکتینگ', department: 'بازاریابی و فروش', parentId: '1014', level: 4, subCount: 0, status: 'فعال', salary: 42000000 },
+      { id: '1016', name: 'نوید جهانگیری', title: 'مدیر جذب و استخدام', department: 'منابع انسانی', parentId: '1005', level: 3, subCount: 0, status: 'فعال', salary: 52000000 },
+      { id: '1017', name: 'مونا یوسفی', title: 'مشاور حقوقی و قراردادها', department: 'حقوقی', parentId: '1001', level: 2, subCount: 0, status: 'فعال', salary: 75000000 }
+    ];
+
+    const SAMPLE_PROJECTS = [
+      { name: 'نئوبانک سازمانی', code: 'PRJ-NEOBANK', budget: 4500000000, description: 'توسعه پلتفرم نسل جدید پرداخت و اعتبارات شرکتی' },
+      { name: 'مهاجرت ابری زیرساخت', code: 'PRJ-CLOUD', budget: 1800000000, description: 'انتقال سرویس‌ها به زیرساخت چندمنطقه‌ای ابری' },
+      { name: 'کمپین بازاریابی دیجیتال', code: 'PRJ-MKTG', budget: 850000000, description: 'افزایش سهم بازار سازمانی' }
+    ];
+
+    const SAMPLE_BPMN = {
+      lanes: [
+        { id: 'lane-1', label: 'تیم مهندسی نرم‌افزار', department: 'فنی و مهندسی' },
+        { id: 'lane-2', label: 'تیم تضمین کیفیت (QA)', department: 'فنی و مهندسی' },
+        { id: 'lane-3', label: 'رهبری فنی (CTO)', department: 'فنی و مهندسی' }
+      ],
+      nodes: [
+        { id: 'b-node-1', type: 'start', label: 'ایجاد Release Candidate', laneId: 'lane-1', x: 200, y: 35, personId: '1008', raci: { responsibleId: '1008', accountableId: '1006' } },
+        { id: 'b-node-2', type: 'task', label: 'تست یکپارچگی سناریوها', laneId: 'lane-2', x: 420, y: 170, personId: '1010', raci: { responsibleId: '1010', accountableId: '1006' } },
+        { id: 'b-node-3', type: 'gateway', label: 'نتیجه ارزیابی کیفی؟', laneId: 'lane-2', x: 640, y: 175 },
+        { id: 'b-node-4', type: 'task', label: 'تأییدیه استقرار در Production', laneId: 'lane-3', x: 820, y: 310, personId: '1002', raci: { responsibleId: '1002', accountableId: '1001' } },
+        { id: 'b-node-5', type: 'end', label: 'انتشار نهایی موفق', laneId: 'lane-3', x: 1040, y: 315 }
+      ],
+      edges: [
+        { id: 'be-1', from: 'b-node-1', to: 'b-node-2' },
+        { id: 'be-2', from: 'b-node-2', to: 'b-node-3' },
+        { id: 'be-3', from: 'b-node-3', to: 'b-node-4', label: 'قبول (تأیید)' },
+        { id: 'be-4', from: 'b-node-4', to: 'b-node-5' }
+      ]
+    };
+
+    /* App State */
+    const State = {
+      people: JSON.parse(JSON.stringify(SAMPLE_PEOPLE)),
+      projects: JSON.parse(JSON.stringify(SAMPLE_PROJECTS)),
+      bpmn: JSON.parse(JSON.stringify(SAMPLE_BPMN)),
+      history: [JSON.parse(JSON.stringify(SAMPLE_PEOPLE))],
+      historyIndex: 0,
+      search: '',
+      colorBy: 'department',
+      highlightProject: '',
+      selectedDepts: new Set(),
+      view: { showPhoto: true, showSubCount: true, showId: false, levelSpacing: 110 }
+    };
+
+    /* Hierarchy Engine */
+    const Hierarchy = {
+      recompute(list) {
+        const map = new Map(list.map(p => [p.id, p]));
+        // Break loops
+        list.forEach(p => {
+          if (!p.parentId || !map.has(p.parentId)) { p.parentId = ''; return; }
+          const visited = new Set([p.id]);
+          let curr = p;
+          while (curr && curr.parentId && map.has(curr.parentId)) {
+            if (visited.has(curr.parentId)) { curr.parentId = ''; break; }
+            visited.add(curr.parentId);
+            curr = map.get(curr.parentId);
+          }
+        });
+
+        // Compute Levels
+        const levelMemo = new Map();
+        const calcLvl = (id, stk) => {
+          if (levelMemo.has(id)) return levelMemo.get(id);
+          if (stk.has(id)) return 1;
+          stk.add(id);
+          const node = map.get(id);
+          let lvl = 1;
+          if (node && node.parentId && map.has(node.parentId)) {
+            lvl = calcLvl(node.parentId, stk) + 1;
+          }
+          stk.delete(id);
+          levelMemo.set(id, lvl);
+          return lvl;
+        };
+        list.forEach(p => p.level = calcLvl(p.id, new Set()));
+
+        // Compute SubCounts
+        const kidsMap = new Map();
+        list.forEach(p => {
+          const arr = kidsMap.get(p.parentId) || [];
+          arr.push(p);
+          kidsMap.set(p.parentId, arr);
+        });
+        const subMemo = new Map();
+        const calcSub = id => {
+          if (subMemo.has(id)) return subMemo.get(id);
+          const kids = kidsMap.get(id) || [];
+          let t = 0;
+          for (const k of kids) t += 1 + calcSub(k.id);
+          subMemo.set(id, t);
+          return t;
+        };
+        list.forEach(p => p.subCount = calcSub(p.id));
+        return list;
+      },
+      wouldCreateCycle(movingId, newParentId) {
+        if (!newParentId || movingId === newParentId) return true;
+        const map = new Map(State.people.map(p => [p.id, p]));
+        const visited = new Set();
+        let curr = map.get(newParentId);
+        while (curr) {
+          if (curr.id === movingId) return true;
+          if (visited.has(curr.id)) return false;
+          visited.add(curr.id);
+          curr = curr.parentId ? map.get(curr.parentId) : null;
+        }
+        return false;
+      }
+    };
+
+    /* Professional Character Avatar Generator (Male/Female) */
+    const KNOWN_FEMALE_NAMES = new Set(['مریم', 'فاطمه', 'زهرا', 'سارا', 'نرگس', 'نگین', 'الهام', 'مینا', 'شیرین', 'مهسا', 'پریا', 'ندا', 'سمیرا', 'نسرین', 'رویا', 'فرشته', 'سپیده', 'آرزو', 'پگاه', 'یلدا', 'شبنم', 'بهاره', 'پرستو', 'لیلا', 'آیدا', 'الناز', 'نیلوفر', 'یاسمن', 'ساناز', 'طاهره', 'روشنک', 'مونا']);
+
+    function getAvatarHtml(p, col) {
+      if (p.photo && (p.photo.startsWith('data:image') || p.photo.startsWith('http'))) {
+        return `<img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow flex-shrink-0" />`;
+      }
+      const firstName = (p.name || '').trim().split(/\s+/)[0];
+      const isFemale = p.gender === 'female' || KNOWN_FEMALE_NAMES.has(firstName);
+
+      if (isFemale) {
+        return `
+          <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow flex-shrink-0 flex items-center justify-center" style="background: linear-gradient(135deg, #F43F5E 0%, #FB7185 100%)" title="${p.name} (خانم)">
+            <svg viewBox="0 0 64 64" class="w-full h-full" fill="none">
+              <path d="M17 31C17 20 22 13 32 13C42 13 47 20 47 31C47 39 45 46 43 49C40 46 41 37 41 33C37 36 27 36 23 33C23 37 24 46 21 49C19 46 17 39 17 31Z" fill="#3730A3"/>
+              <path d="M12 58C12 47 20 42 32 42C44 42 52 47 52 58V64H12V58Z" fill="#4C1D95"/>
+              <path d="M25 43L32 53L39 43L35 42H29L25 43Z" fill="#FCE7F3"/>
+              <path d="M28 35H36V45C36 47 34 48 32 48C30 48 28 47 28 45V35Z" fill="#FCD34D"/>
+              <path d="M22 27C22 21 26 17 32 17C38 17 42 21 42 27C42 34 38 38 32 38C26 38 22 34 22 27Z" fill="#FDE68A"/>
+              <circle cx="27.5" cy="28.5" r="1.5" fill="#1E1B4B"/>
+              <circle cx="36.5" cy="28.5" r="1.5" fill="#1E1B4B"/>
+              <path d="M29.5 33.5C30.5 35 33.5 35 34.5 33.5" stroke="#E11D48" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow flex-shrink-0 flex items-center justify-center" style="background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)" title="${p.name} (آقا)">
+            <svg viewBox="0 0 64 64" class="w-full h-full" fill="none">
+              <path d="M10 58C10 46 19 41 32 41C45 41 54 46 54 58V64H10V58Z" fill="#1E293B"/>
+              <path d="M26 42L32 52L38 42H26Z" fill="#F8FAFC"/>
+              <path d="M30.5 44L32 46L33.5 44L33 55L32 58L31 55L30.5 44Z" fill="#DC2626"/>
+              <path d="M27 34H37V44H27V34Z" fill="#FCD34D"/>
+              <path d="M22 25C22 19 26 16 32 16C38 16 42 19 42 25C42 33 38 37 32 37C26 37 22 33 22 25Z" fill="#FDE68A"/>
+              <path d="M20 22C20 16 24 12 32 12C39 12 43 15 44 20C42 19 39 17 34 18C28 19 24 23 20 24V22Z" fill="#1F2937"/>
+              <circle cx="28" cy="27" r="1.6" fill="#0F172A"/>
+              <circle cx="36" cy="27" r="1.6" fill="#0F172A"/>
+              <path d="M29.5 32.5C30.5 34 33.5 34 34.5 32.5" stroke="#B45309" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        `;
+      }
+    }
+
+    /* Canvas Drawing & Tree Layout Engine */
+    const Canvas = {
+      zoom: 1,
+      pan: { x: 50, y: 50 },
+      isPanning: false,
+      startPan: { x: 0, y: 0 },
+      draggedId: null,
+
+      init() {
+        const container = document.getElementById('canvas-container');
+        container.addEventListener('mousedown', e => {
+          if (e.target.closest('.node-card')) return;
+          Canvas.isPanning = true;
+          Canvas.startPan = { x: e.clientX - Canvas.pan.x, y: e.clientY - Canvas.pan.y };
+        });
+        window.addEventListener('mousemove', e => {
+          if (!Canvas.isPanning) return;
+          Canvas.pan = { x: e.clientX - Canvas.startPan.x, y: e.clientY - Canvas.startPan.y };
+          Canvas.applyTransform();
+        });
+        window.addEventListener('mouseup', () => Canvas.isPanning = false);
+        container.addEventListener('wheel', e => {
+          e.preventDefault();
+          const factor = e.deltaY < 0 ? 1.08 : 0.92;
+          Canvas.zoom = Math.min(Math.max(0.2, Canvas.zoom * factor), 2.2);
+          document.getElementById('zoom-label').textContent = Math.round(Canvas.zoom * 100) + '%';
+          Canvas.applyTransform();
+        });
+      },
+
+      applyTransform() {
+        const world = document.getElementById('canvas-world');
+        world.style.transform = `translate(${Canvas.pan.x}px, ${Canvas.pan.y}px) scale(${Canvas.zoom})`;
+      },
+
+      zoomIn() { Canvas.zoom = Math.min(Canvas.zoom + 0.15, 2.2); Canvas.updateZoomLabel(); Canvas.applyTransform(); },
+      zoomOut() { Canvas.zoom = Math.max(Canvas.zoom - 0.15, 0.2); Canvas.updateZoomLabel(); Canvas.applyTransform(); },
+      updateZoomLabel() { document.getElementById('zoom-label').textContent = Math.round(Canvas.zoom * 100) + '%'; },
+
+      fitView() {
+        const nodes = Canvas.currentPositionedNodes || [];
+        if (!nodes.length) return;
+        const minX = Math.min(...nodes.map(n => n.x));
+        const maxX = Math.max(...nodes.map(n => n.x + n.width));
+        const minY = Math.min(...nodes.map(n => n.y));
+        const maxY = Math.max(...nodes.map(n => n.y + n.height));
+
+        const container = document.getElementById('canvas-container');
+        const scale = Math.min(Math.max(0.35, Math.min(container.clientWidth / (maxX - minX + 160), container.clientHeight / (maxY - minY + 160))), 1.1);
+        Canvas.zoom = scale;
+        Canvas.pan = { x: (container.clientWidth - (maxX + minX) * scale) / 2, y: Math.max(40, (container.clientHeight - (maxY + minY) * scale) / 2) };
+        Canvas.updateZoomLabel();
+        Canvas.applyTransform();
+      },
+
+      render() {
+        const people = State.people.filter(p => {
+          if (State.search) {
+            const q = State.search.toLowerCase();
+            if (!p.name.toLowerCase().includes(q) && !p.title.toLowerCase().includes(q) && !p.department.toLowerCase().includes(q)) return false;
+          }
+          if (State.selectedDepts.size > 0 && !State.selectedDepts.has(p.department)) return false;
+          return true;
+        });
+
+        // Layout tree calculation
+        const cardW = 320, cardH = 165, hGap = 40, vGap = State.view.levelSpacing || 110;
+        const kidsMap = new Map();
+        people.forEach(p => {
+          const arr = kidsMap.get(p.parentId) || [];
+          arr.push(p);
+          kidsMap.set(p.parentId, arr);
+        });
+
+        const roots = people.filter(p => !p.parentId);
+        if (!roots.length && people.length) roots.push(people[0]);
+
+        function buildNode(p) {
+          const kids = kidsMap.get(p.id) || [];
+          return { data: p, x: 0, y: 0, width: cardW, height: cardH, children: kids.map(buildNode) };
+        }
+
+        const rootLayouts = roots.map(buildNode);
+
+        function getWidth(node) {
+          if (!node.children.length) return node.width;
+          const totalKidsW = node.children.reduce((acc, c) => acc + getWidth(c), 0) + (node.children.length - 1) * hGap;
+          return Math.max(node.width, totalKidsW);
+        }
+
+        function assignPos(node, left, top) {
+          const w = getWidth(node);
+          node.y = top;
+          node.x = left + w / 2 - node.width / 2;
+          let curL = left;
+          for (const c of node.children) {
+            const cw = getWidth(c);
+            assignPos(c, curL, top + node.height + vGap);
+            curL += cw + hGap;
+          }
+        }
+
+        let gLeft = 50;
+        rootLayouts.forEach(r => {
+          const w = getWidth(r);
+          assignPos(r, gLeft, 60);
+          gLeft += w + hGap * 2;
+        });
+
+        const flatNodes = [];
+        function collect(n) { flatNodes.push(n); n.children.forEach(collect); }
+        rootLayouts.forEach(collect);
+        Canvas.currentPositionedNodes = flatNodes;
+
+        // Render SVG Lines
+        let svgHtml = '';
+        flatNodes.forEach(p => {
+          p.children.forEach(c => {
+            const sx = p.x + p.width / 2, sy = p.y + p.height;
+            const tx = c.x + c.width / 2, ty = c.y;
+            const midY = sy + (ty - sy) / 2;
+            svgHtml += `<path d="M ${sx} ${sy} C ${sx} ${midY}, ${tx} ${midY}, ${tx} ${ty}" fill="none" stroke="#94A3B8" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>`;
+          });
+        });
+        document.getElementById('svg-links').innerHTML = svgHtml;
+
+        // Render HTML Cards
+        const deptColors = { 'هیئت مدیره': '#1E40AF', 'مالی و اداری': '#059669', 'فنی و مهندسی': '#0284C7', 'بازاریابی و فروش': '#DC2626', 'منابع انسانی': '#7C3AED', 'حقوقی': '#EA580C', 'default': '#475569' };
+        const levelColors = ['#1E40AF', '#0284C7', '#059669', '#DC2626', '#7C3AED', '#EA580C', '#0891B2'];
+
+        let cardsHtml = '';
+        flatNodes.forEach(n => {
+          const p = n.data;
+          const col = State.colorBy === 'level' ? levelColors[(p.level - 1) % levelColors.length] : (deptColors[p.department] || deptColors.default);
+          const isHighlighted = State.highlightProject && p.projectRoles?.some(pr => pr.project === State.highlightProject);
+
+          cardsHtml += `
+            <div class="node-card absolute rounded-2xl bg-white dark:bg-slate-900 border-2 transition-all shadow-sm hover:shadow-xl ${isHighlighted ? 'ring-4 ring-indigo-500 border-indigo-600' : 'border-slate-200 dark:border-slate-800'}"
+                 style="left: ${n.x}px; top: ${n.y}px;"
+                 ondragover="Canvas.onDragOver(event, '${p.id}')"
+                 ondrop="Canvas.onDrop(event, '${p.id}')">
+              <!-- Drag Handle Accent Bar -->
+              <div draggable="true" ondragstart="Canvas.onDragStart(event, '${p.id}')" class="h-3 rounded-t-xl cursor-grab flex items-center justify-center group" style="background-color: ${col}">
+                <div class="w-8 h-1 bg-white/40 rounded-full"></div>
+              </div>
+              <div class="p-3.5 flex flex-col justify-between h-[calc(100%-12px)]">
+                <div class="flex items-start gap-3">
+                  ${State.view.showPhoto ? getAvatarHtml(p, col) : ''}
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                      <h4 class="font-black text-sm text-slate-900 dark:text-slate-100 truncate cursor-pointer hover:text-indigo-600" onclick="Drawer.openEdit('${p.id}')">${p.name}</h4>
+                      ${State.view.showId ? `<span class="text-[10px] font-mono text-slate-400">#${p.id}</span>` : ''}
+                    </div>
+                    <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate mt-0.5">${p.title}</p>
+                    <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-extrabold truncate" style="background-color: ${col}18; color: ${col}">${p.department}</span>
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600">سطح ${p.level}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                  <span class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    👥 ${p.subCount} نفر زیرمجموعه
+                  </span>
+                  <div class="flex items-center gap-1">
+                    <button onclick="Drawer.openNewUnder('${p.id}')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-600 rounded font-bold" title="افزودن زیرمجموعه">+</button>
+                    <button onclick="Drawer.openEdit('${p.id}')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded" title="ویرایش">✎</button>
+                    <button onclick="App.deletePerson('${p.id}')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-rose-500 rounded" title="حذف">✕</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        });
+        document.getElementById('cards-layer').innerHTML = cardsHtml;
+      },
+
+      onDragStart(e, id) { e.dataTransfer.setData('text/plain', id); Canvas.draggedId = id; },
+      onDragOver(e, targetId) {
+        e.preventDefault();
+        if (Canvas.draggedId && Canvas.draggedId !== targetId) {
+          const wouldCycle = Hierarchy.wouldCreateCycle(Canvas.draggedId, targetId);
+          e.currentTarget.style.borderColor = wouldCycle ? '#EF4444' : '#10B981';
+        }
+      },
+      onDrop(e, targetId) {
+        e.preventDefault();
+        const sourceId = e.dataTransfer.getData('text/plain') || Canvas.draggedId;
+        if (sourceId && sourceId !== targetId) {
+          if (!Hierarchy.wouldCreateCycle(sourceId, targetId)) {
+            App.movePerson(sourceId, targetId);
+          } else {
+            alert('خطا: انتساب این مدیر باعث ایجاد چرخه در ساختار چارت می‌شود!');
+          }
+        }
+        Canvas.draggedId = null;
+        Canvas.render();
+      }
+    };
+
+    /* BPMN Studio Engine */
+    const BpmnStudio = {
+      connectMode: false,
+      sourceNodeId: null,
+
+      render() {
+        const proc = State.bpmn;
+        const laneH = 135;
+        // Lanes
+        let lanesHtml = '';
+        proc.lanes.forEach((l, idx) => {
+          lanesHtml += `
+            <div class="absolute left-0 right-0 border-b border-dashed border-slate-300 dark:border-slate-800 flex" style="top: ${idx * laneH}px; height: ${laneH}px;">
+              <div class="w-48 bg-slate-200/80 dark:bg-slate-900 border-r border-slate-300 dark:border-slate-800 p-3 flex flex-col justify-center">
+                <input type="text" value="${l.label}" onchange="State.bpmn.lanes[${idx}].label=this.value" class="font-bold text-xs bg-transparent border-b outline-none">
+                <span class="text-[10px] text-slate-500 mt-1 font-semibold">${l.department}</span>
+              </div>
+            </div>`;
+        });
+        document.getElementById('bpmn-lanes').innerHTML = lanesHtml;
+
+        // Edges
+        let edgesHtml = '';
+        proc.edges.forEach(e => {
+          const fn = proc.nodes.find(n => n.id === e.from);
+          const tn = proc.nodes.find(n => n.id === e.to);
+          if (!fn || !tn) return;
+          const sx = fn.x + (fn.type === 'task' ? 140 : 45);
+          const sy = fn.y + (fn.type === 'task' ? 35 : 24);
+          const tx = tn.x;
+          const ty = tn.y + (tn.type === 'task' ? 35 : 24);
+          const midX = sx + (tx - sx) / 2;
+          edgesHtml += `
+            <g class="cursor-pointer" onclick="BpmnStudio.selectEdge('${e.id}')">
+              <path d="M ${sx} ${sy} C ${midX} ${sy}, ${midX} ${ty}, ${tx} ${ty}" fill="none" stroke="#6366F1" stroke-width="2.5" marker-end="url(#bpmn-arrow)"/>
+              ${e.label ? `<text x="${(sx+tx)/2}" y="${(sy+ty)/2 - 8}" fill="#4F46E5" font-size="11" font-weight="bold" text-anchor="middle">${e.label}</text>` : ''}
+            </g>`;
+        });
+        document.getElementById('bpmn-edges-group').innerHTML = edgesHtml;
+
+        // Nodes
+        let nodesHtml = '';
+        proc.nodes.forEach(n => {
+          const person = State.people.find(p => p.id === (n.raci?.responsibleId || n.personId));
+          nodesHtml += `
+            <div class="absolute cursor-pointer transition-transform hover:scale-105" style="left: ${n.x}px; top: ${n.y}px;" onclick="BpmnStudio.onNodeClick('${n.id}')">
+              ${n.type === 'start' ? `
+                <div class="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shadow-md border-2 border-white">▶</div>
+              ` : n.type === 'end' ? `
+                <div class="w-12 h-12 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-xs shadow-md border-2 border-white">■</div>
+              ` : n.type === 'gateway' ? `
+                <div class="w-13 h-13 bg-amber-500 text-white flex items-center justify-center font-black text-sm shadow-md border-2 border-white transform rotate-45"><span class="transform -rotate-45">X</span></div>
+              ` : `
+                <div class="w-40 p-2.5 rounded-xl bg-white dark:bg-slate-900 border-2 border-indigo-500 shadow-md">
+                  <span class="text-[9px] font-black uppercase text-indigo-600 block">User Task</span>
+                  <div class="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-2">${n.label}</div>
+                  ${person ? `<div class="mt-2 text-[10px] text-slate-600 pt-1 border-t flex items-center gap-1 font-semibold truncate">👤 ${person.name}</div>` : ''}
+                </div>
+              `}
+            </div>`;
+        });
+        document.getElementById('bpmn-nodes-layer').innerHTML = nodesHtml;
+      },
+
+      addNode(type) {
+        State.bpmn.nodes.push({
+          id: 'b-node-' + Date.now(),
+          type,
+          label: type === 'start' ? 'شروع' : type === 'end' ? 'پایان' : type === 'gateway' ? 'تصمیم انحصاری' : 'فعالیت کاری جدید',
+          laneId: State.bpmn.lanes[0]?.id || 'lane-1',
+          x: 200 + Math.random() * 80,
+          y: 40 + Math.random() * 40
+        });
+        BpmnStudio.render();
+      },
+
+      addLane() {
+        State.bpmn.lanes.push({
+          id: 'lane-' + Date.now(),
+          label: 'لِین سازمانی ' + (State.bpmn.lanes.length + 1),
+          department: State.people[0]?.department || 'فنی و مهندسی'
+        });
+        BpmnStudio.render();
+      },
+
+      toggleConnect() {
+        BpmnStudio.connectMode = !BpmnStudio.connectMode;
+        BpmnStudio.sourceNodeId = null;
+        document.getElementById('btn-bpmn-connect').classList.toggle('bg-amber-500', BpmnStudio.connectMode);
+        document.getElementById('btn-bpmn-connect').classList.toggle('text-white', BpmnStudio.connectMode);
+      },
+
+      onNodeClick(nodeId) {
+        if (BpmnStudio.connectMode) {
+          if (!BpmnStudio.sourceNodeId) {
+            BpmnStudio.sourceNodeId = nodeId;
+          } else if (BpmnStudio.sourceNodeId !== nodeId) {
+            State.bpmn.edges.push({
+              id: 'be-' + Date.now(),
+              from: BpmnStudio.sourceNodeId,
+              to: nodeId
+            });
+            BpmnStudio.toggleConnect();
+            BpmnStudio.render();
+          }
+        } else {
+          BpmnStudio.inspectNode(nodeId);
+        }
+      },
+
+      inspectNode(nodeId) {
+        const node = State.bpmn.nodes.find(n => n.id === nodeId);
+        if (!node) return;
+        const inspector = document.getElementById('bpmn-inspector-content');
+        inspector.innerHTML = `
+          <div class="space-y-3 text-right">
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">عنوان گام</label>
+              <input type="text" value="${node.label}" onchange="BpmnStudio.updateNodeProp('${node.id}', 'label', this.value)" class="w-full p-2 text-xs rounded-xl border bg-slate-50 dark:bg-slate-800 outline-none">
+            </div>
+            ${node.type === 'task' ? `
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">مجری مستقیم از چارت (Responsible - R)</label>
+                <select onchange="BpmnStudio.updateNodeAssignee('${node.id}', this.value)" class="w-full p-2 text-xs rounded-xl border bg-slate-50 dark:bg-slate-800 outline-none">
+                  <option value="">— بدون مجری —</option>
+                  ${State.people.map(p => `<option value="${p.id}" ${p.id === (node.raci?.responsibleId || node.personId) ? 'selected' : ''}>${p.name} (${p.title} - ${p.department})</option>`).join('')}
+                </select>
+              </div>
+            ` : ''}
+          </div>`;
+      },
+
+      updateNodeProp(id, prop, val) {
+        const n = State.bpmn.nodes.find(x => x.id === id);
+        if (n) { n[prop] = val; BpmnStudio.render(); }
+      },
+      updateNodeAssignee(nodeId, personId) {
+        const n = State.bpmn.nodes.find(x => x.id === nodeId);
+        if (n) {
+          n.personId = personId;
+          n.raci = { ...(n.raci || {}), responsibleId: personId };
+          BpmnStudio.render();
+        }
+      },
+      exportXml() {
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="https://pingonest.io/bpmn">
+  <bpmn:process id="Process_1" name="PingoNest Workflow" isExecutable="true">
+    ${State.bpmn.nodes.map(n => `<bpmn:${n.type === 'start' ? 'startEvent' : n.type === 'end' ? 'endEvent' : n.type === 'gateway' ? 'exclusiveGateway' : 'task'} id="${n.id}" name="${n.label}"/>`).join('\n    ')}
+    ${State.bpmn.edges.map(e => `<bpmn:sequenceFlow id="${e.id}" sourceRef="${e.from}" targetRef="${e.to}"/>`).join('\n    ')}
+  </bpmn:process>
+</bpmn:definitions>`;
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'process.bpmn'; a.click();
+      }
+    };
+
+    /* Modals Controller */
+    const Modals = {
+      open(name) {
+        document.getElementById('modal-' + name).classList.remove('hidden');
+        document.getElementById('modal-' + name).classList.add('flex');
+        if (name === 'bpmn') BpmnStudio.render();
+        if (name === 'projects') App.renderProjectsList();
+        if (name === 'analytics') App.renderAnalytics();
+      },
+      close(name) {
+        document.getElementById('modal-' + name).classList.add('hidden');
+        document.getElementById('modal-' + name).classList.remove('flex');
+      }
+    };
+
+    /* Person Drawer Controller */
+    const Drawer = {
+      currentId: null,
+      openEdit(id) {
+        Drawer.currentId = id;
+        const p = State.people.find(x => x.id === id);
+        if (!p) return;
+        document.getElementById('drawer-title').textContent = 'ویرایش ' + p.name;
+        document.getElementById('f-person-id').value = p.id;
+        document.getElementById('f-name').value = p.name;
+        document.getElementById('f-title').value = p.title;
+        document.getElementById('f-dept').value = p.department;
+        document.getElementById('f-status').value = p.status;
+        document.getElementById('f-salary').value = p.salary || '';
+        document.getElementById('f-email').value = p.email || '';
+        document.getElementById('btn-delete-person').style.display = 'block';
+
+        // Manager options
+        const parentSel = document.getElementById('f-parent');
+        parentSel.innerHTML = '<option value="">— بالاترین سطح (بدون مدیر) —</option>' +
+          State.people.filter(x => x.id !== p.id).map(x => `<option value="${x.id}" ${x.id === p.parentId ? 'selected' : ''}>${x.name} (${x.title})</option>`).join('');
+
+        document.getElementById('drawer-person').classList.remove('hidden');
+        document.getElementById('drawer-person').classList.add('flex');
+      },
+
+      openNewUnder(parentId) {
+        Drawer.openNew();
+        document.getElementById('f-parent').value = parentId;
+      },
+
+      openNew() {
+        Drawer.currentId = null;
+        document.getElementById('drawer-title').textContent = 'افزودن عضو جدید';
+        document.getElementById('f-person-id').value = '100' + (State.people.length + 1);
+        document.getElementById('f-name').value = '';
+        document.getElementById('f-title').value = '';
+        document.getElementById('f-dept').value = State.people[0]?.department || 'فنی و مهندسی';
+        document.getElementById('f-status').value = 'فعال';
+        document.getElementById('f-salary').value = '50000000';
+        document.getElementById('btn-delete-person').style.display = 'none';
+
+        const parentSel = document.getElementById('f-parent');
+        parentSel.innerHTML = '<option value="">— بالاترین سطح (بدون مدیر) —</option>' +
+          State.people.map(x => `<option value="${x.id}">${x.name} (${x.title})</option>`).join('');
+
+        document.getElementById('drawer-person').classList.remove('hidden');
+        document.getElementById('drawer-person').classList.add('flex');
+      },
+
+      close() {
+        document.getElementById('drawer-person').classList.add('hidden');
+        document.getElementById('drawer-person').classList.remove('flex');
+      },
+
+      save(e) {
+        e.preventDefault();
+        const id = document.getElementById('f-person-id').value;
+        const name = document.getElementById('f-name').value;
+        const title = document.getElementById('f-title').value;
+        const department = document.getElementById('f-dept').value;
+        const parentId = document.getElementById('f-parent').value;
+        const status = document.getElementById('f-status').value;
+        const salary = +document.getElementById('f-salary').value || 0;
+        const email = document.getElementById('f-email').value;
+
+        if (Drawer.currentId) {
+          const idx = State.people.findIndex(p => p.id === Drawer.currentId);
+          if (idx !== -1) {
+            State.people[idx] = { ...State.people[idx], name, title, department, parentId, status, salary, email };
+          }
+        } else {
+          State.people.push({ id, name, title, department, parentId, status, salary, email, level: 2, subCount: 0 });
+        }
+        App.pushHistory();
+        Drawer.close();
+        App.refresh();
+      },
+
+      deleteCurrent() {
+        if (!Drawer.currentId) return;
+        if (confirm('آیا از حذف این عضو اطمینان دارید؟ زیرمجموعه‌ها به مدیر بالادست منتقل می‌شوند.')) {
+          App.deletePerson(Drawer.currentId);
+          Drawer.close();
+        }
+      }
+    };
+
+    /* App Controller */
+    const App = {
+      init() {
+        State.people = Hierarchy.recompute(State.people);
+        Canvas.init();
+        App.updateDeptChips();
+        App.updateProjectSelect();
+        App.refresh();
+        setTimeout(() => Canvas.fitView(), 200);
+      },
+
+      pushHistory() {
+        State.people = Hierarchy.recompute(State.people);
+        State.history = State.history.slice(0, State.historyIndex + 1);
+        State.history.push(JSON.parse(JSON.stringify(State.people)));
+        State.historyIndex++;
+        App.updateHistoryButtons();
+      },
+
+      undo() {
+        if (State.historyIndex > 0) {
+          State.historyIndex--;
+          State.people = JSON.parse(JSON.stringify(State.history[State.historyIndex]));
+          App.updateHistoryButtons();
+          App.refresh();
+        }
+      },
+
+      redo() {
+        if (State.historyIndex < State.history.length - 1) {
+          State.historyIndex++;
+          State.people = JSON.parse(JSON.stringify(State.history[State.historyIndex]));
+          App.updateHistoryButtons();
+          App.refresh();
+        }
+      },
+
+      updateHistoryButtons() {
+        document.getElementById('btn-undo').disabled = State.historyIndex <= 0;
+        document.getElementById('btn-redo').disabled = State.historyIndex >= State.history.length - 1;
+      },
+
+      deletePerson(id) {
+        const target = State.people.find(p => p.id === id);
+        if (!target) return;
+        State.people = State.people.filter(p => p.id !== id).map(p => p.parentId === id ? { ...p, parentId: target.parentId } : p);
+        App.pushHistory();
+        App.refresh();
+      },
+
+      movePerson(id, newParentId) {
+        const p = State.people.find(x => x.id === id);
+        if (p) {
+          p.parentId = newParentId;
+          App.pushHistory();
+          App.refresh();
+        }
+      },
+
+      onSearch(val) { State.search = val; Canvas.render(); },
+      setColorBy(mode) {
+        State.colorBy = mode;
+        document.getElementById('btn-color-dept').className = mode === 'department' ? 'py-1 rounded-lg bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'py-1 rounded-lg text-slate-600';
+        document.getElementById('btn-color-level').className = mode === 'level' ? 'py-1 rounded-lg bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'py-1 rounded-lg text-slate-600';
+        Canvas.render();
+      },
+      setProjectHighlight(proj) { State.highlightProject = proj; Canvas.render(); },
+      toggleView(prop, val) { State.view[prop] = val; Canvas.render(); },
+      setLevelSpacing(val) { State.view.levelSpacing = val; document.getElementById('spacing-val').textContent = val + 'px'; Canvas.render(); },
+      resetFilters() {
+        State.search = '';
+        State.selectedDepts.clear();
+        State.highlightProject = '';
+        document.getElementById('search-input').value = '';
+        document.getElementById('project-highlight-select').value = '';
+        App.updateDeptChips();
+        Canvas.render();
+      },
+
+      toggleDept(dept) {
+        if (State.selectedDepts.has(dept)) State.selectedDepts.delete(dept);
+        else State.selectedDepts.add(dept);
+        App.updateDeptChips();
+        Canvas.render();
+      },
+
+      updateDeptChips() {
+        const depts = Array.from(new Set(State.people.map(p => p.department))).sort();
+        let html = '';
+        depts.forEach(d => {
+          const active = State.selectedDepts.size === 0 || State.selectedDepts.has(d);
+          const count = State.people.filter(p => p.department === d).length;
+          html += `<button onclick="App.toggleDept('${d}')" class="px-2 py-0.5 rounded-lg text-xs font-bold border transition-all ${active ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'bg-slate-50 text-slate-500 opacity-60'}">${d} (${count})</button>`;
+        });
+        document.getElementById('dept-chips').innerHTML = html;
+      },
+
+      updateProjectSelect() {
+        const sel = document.getElementById('project-highlight-select');
+        sel.innerHTML = '<option value="">— هیچ‌کدام (عادی) —</option>' + State.projects.map(p => `<option value="${p.name}">${p.name} (${p.code})</option>`).join('');
+      },
+
+      refresh() {
+        document.getElementById('stat-total').textContent = State.people.length;
+        document.getElementById('stat-depts').textContent = new Set(State.people.map(p => p.department)).size;
+        document.getElementById('stat-levels').textContent = Math.max(...State.people.map(p => p.level || 1), 1);
+        document.getElementById('stat-active').textContent = State.people.filter(p => p.status === 'فعال').length;
+        Canvas.render();
+      },
+
+      toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+      },
+
+      triggerExcelImport() { document.getElementById('excel-file-input').click(); },
+
+      handleExcelFile(file) {
+        if (!file || typeof XLSX === 'undefined') return;
+        const reader = new FileReader();
+        reader.onload = e => {
+          try {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+            const imported = json.map((r, i) => ({
+              id: String(r['کد پرسنلی'] || r['id'] || `100${i+1}`).trim(),
+              name: String(r['نام و نام خانوادگی'] || r['name'] || '').trim(),
+              title: String(r['سمت'] || r['title'] || 'کارشناس').trim(),
+              department: String(r['دپارتمان'] || r['department'] || 'سایر').trim(),
+              parentId: String(r['کد مدیر'] || r['parentId'] || '').trim(),
+              status: String(r['وضعیت'] || 'فعال').trim(),
+              level: 1, subCount: 0
+            })).filter(x => x.name);
+
+            if (imported.length) {
+              State.people = imported;
+              App.pushHistory();
+              App.updateDeptChips();
+              App.refresh();
+              Canvas.fitView();
+              alert(`چارت سازمانی با موفقیت بارگذاری شد (${imported.length} نفر).`);
+            }
+          } catch (err) { alert('خطا در خواندن فایل اکسل'); }
+        };
+        reader.readAsArrayBuffer(file);
+      },
+
+      exportExcel() {
+        if (typeof XLSX === 'undefined') return;
+        const rows = State.people.map(p => ({
+          'کد پرسنلی': p.id,
+          'نام و نام خانوادگی': p.name,
+          'سمت': p.title,
+          'کد مدیر': p.parentId,
+          'دپارتمان': p.department,
+          'سطح': p.level,
+          'تعداد زیرمجموعه': p.subCount,
+          'وضعیت': p.status,
+          'حقوق (ریال)': p.salary || ''
+        }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'چارت سازمانی');
+        XLSX.writeFile(wb, 'pingonest-orgchart.xlsx');
+      },
+
+      downloadExcelTemplate() {
+        if (typeof XLSX === 'undefined') return;
+        const rows = [
+          { 'کد پرسنلی': '1001', 'نام و نام خانوادگی': 'نام مدیرعامل', 'سمت': 'مدیرعامل', 'کد مدیر': '', 'دپارتمان': 'هیئت مدیره', 'وضعیت': 'فعال' },
+          { 'کد پرسنلی': '1002', 'نام و نام خانوادگی': 'نام معاون', 'سمت': 'معاون فنی', 'کد مدیر': '1001', 'دپارتمان': 'فنی و مهندسی', 'وضعیت': 'فعال' }
+        ];
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'الگو');
+        XLSX.writeFile(wb, 'pingonest-template.xlsx');
+      },
+
+      exportStandaloneHtml() {
+        const fullHtml = document.documentElement.outerHTML;
+        const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'PingoNest-Pro-Standalone.html'; a.click();
+      },
+
+      saveProjectFile() {
+        const backup = {
+          version: '4.0.0',
+          timestamp: new Date().toISOString(),
+          orgName: 'پارس تک — شرکت راهکارهای ابری و مالی',
+          people: State.people,
+          projects: State.projects || [],
+          processes: State.processes || [],
+          jobs: State.jobs || []
+        };
+        const str = JSON.stringify(backup, null, 2);
+        const blob = new Blob([str], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `PingoNest-Project-${new Date().toISOString().slice(0, 10)}.pingo`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      },
+
+      renderProjectsList() {
+        const c = document.getElementById('projects-list-container');
+        c.innerHTML = State.projects.map(proj => {
+          const members = State.people.filter(p => p.projectRoles?.some(pr => pr.project === proj.name));
+          return `
+            <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100">${proj.name}</h4>
+                  <p class="text-xs text-slate-500 mt-0.5">${proj.description}</p>
+                </div>
+                <button onclick="App.setProjectHighlight('${proj.name}'); Modals.close('projects');" class="px-3 py-1 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow">نمایش روی چارت</button>
+              </div>
+              <div class="mt-3 pt-2 border-t flex flex-wrap gap-2 text-xs">
+                ${members.map(m => `<span class="px-2 py-1 rounded bg-white dark:bg-slate-900 border text-slate-700 dark:text-slate-300 font-semibold">👤 ${m.name} (${m.title})</span>`).join('')}
+              </div>
+            </div>`;
+        }).join('');
+      },
+
+      renderAnalytics() {
+        const c = document.getElementById('analytics-content');
+        const managers = State.people.filter(p => State.people.some(x => x.parentId === p.id));
+        const spans = managers.map(m => State.people.filter(x => x.parentId === m.id).length);
+        const avgSpan = spans.length ? (spans.reduce((a,b)=>a+b,0)/spans.length).toFixed(1) : 0;
+        const spofs = State.people.filter(p => p.subCount >= 4).sort((a,b)=>b.subCount - a.subCount);
+
+        c.innerHTML = `
+          <div class="grid grid-cols-3 gap-4 text-center">
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border"><span class="text-xs text-slate-500 font-bold">میانگین حوزه کنترل</span><div class="font-black text-2xl text-indigo-600 mt-1">${avgSpan} نفر</div></div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border"><span class="text-xs text-slate-500 font-bold">تعداد لایه‌های هرم</span><div class="font-black text-2xl text-purple-600 mt-1">${Math.max(...State.people.map(p=>p.level||1), 1)} سطح</div></div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border"><span class="text-xs text-slate-500 font-bold">تعداد مدیران مستقیم</span><div class="font-black text-2xl text-emerald-600 mt-1">${managers.length} نفر</div></div>
+          </div>
+
+          <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border space-y-2">
+            <h4 class="font-bold text-xs text-rose-600">ریسک تمرکز سازمانی و افراد کلیدی (Single Point of Failure)</h4>
+            <div class="space-y-1 text-xs">
+              ${spofs.map(s => `<div class="p-2 bg-white dark:bg-slate-900 rounded-xl flex justify-between"><span>${s.name} (${s.title} - ${s.department})</span><b>${s.subCount} نفر زیرمجموعه مستقیم و غیرمستقیم</b></div>`).join('')}
+            </div>
+          </div>`;
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => App.init());
+  </script>
+</body>
+</html>

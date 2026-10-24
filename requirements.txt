@@ -1,0 +1,7 @@
+# Optional high-performance dependencies for PingoNest Python Backend
+# Note: server.py runs natively with Python 3 standard library (zero-dependency).
+# Installing these packages enables high-concurrency FastAPI mode:
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+python-multipart>=0.0.9

@@ -1,0 +1,6 @@
+{
+  "name": "PingoNest ST1 Architecture Baseline",
+  "description": "Greenfield architectural baseline, canonical entity dictionary, lifecycle & temporal model, authorization contracts, JSON schemas, interactive ERD, and executable validation suite for PingoNest ST1.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,115 @@
+erDiagram
+    ORGANIZATION ||--o{ WORKSPACE : "partitions (1:N)"
+    ORGANIZATION ||--|{ SUBJECT : "authorizes (1:N, min 1)"
+    ORGANIZATION ||--o{ GOVERNANCE_POLICY : "declares (1:N)"
+    ORGANIZATION ||--|{ AUDIT_TRANSACTION_RECORD : "records into ledger (1:N)"
+
+    WORKSPACE ||--o{ NEST : "houses (1:N)"
+    NEST ||--o{ PINGO_NODE : "clusters (1:N)"
+
+    SUBJECT ||--o{ ROLE_GRANT : "receives (1:N)"
+    SUBJECT ||--o{ APPROVAL_REQUEST : "submits / approves (1:N)"
+
+    ROLE_DEFINITION ||--o{ ROLE_GRANT : "assigned via (1:N)"
+    GOVERNANCE_POLICY ||--o{ APPROVAL_REQUEST : "triggers (1:N)"
+
+    ORGANIZATION {
+        string id PK "URN UUID"
+        string slug UK
+        string display_name
+        string status
+        string tier
+        string isolation_level
+        string contact_email
+    }
+
+    WORKSPACE {
+        string id PK "URN UUID"
+        string org_id FK
+        string code
+        string name
+        string status
+        int max_nests
+    }
+
+    NEST {
+        string id PK "URN UUID"
+        string org_id FK
+        string workspace_id FK
+        string nest_name
+        string environment
+        string status
+        int heartbeat_interval_sec
+        string quorum_policy
+    }
+
+    PINGO_NODE {
+        string id PK "URN UUID"
+        string nest_id FK
+        string node_key UK
+        string hostname
+        string status
+        string ip_address
+        string firmware_or_runtime_version
+    }
+
+    SUBJECT {
+        string id PK "URN UUID"
+        string org_id FK
+        string principal_type
+        string identifier_handle
+        string status
+        string security_clearance
+    }
+
+    ROLE_DEFINITION {
+        string id PK "URN UUID"
+        string org_id FK
+        string role_name
+        string description
+        array permissions
+        boolean is_system_role
+    }
+
+    ROLE_GRANT {
+        string id PK "URN UUID"
+        string subject_id FK
+        string role_id FK
+        string scope_type
+        string scope_target_id FK
+        string granted_by FK
+        boolean is_revoked
+    }
+
+    GOVERNANCE_POLICY {
+        string id PK "URN UUID"
+        string org_id FK
+        string policy_code UK
+        string policy_type
+        string enforcement_level
+        string status
+    }
+
+    APPROVAL_REQUEST {
+        string id PK "URN UUID"
+        string org_id FK
+        string policy_id FK
+        string requester_subject_id FK
+        string target_resource_id FK
+        string action
+        string status
+        datetime expires_at
+    }
+
+    AUDIT_TRANSACTION_RECORD {
+        string id PK "URN UUID"
+        int sequence_number
+        string org_id FK
+        string actor_subject_id FK
+        string operation_class
+        string pre_state_hash
+        string post_state_hash
+        string previous_audit_entry_hash
+        string entry_signature_hash
+        datetime recorded_at
+    }
